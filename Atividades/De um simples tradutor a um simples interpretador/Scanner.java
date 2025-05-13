@@ -19,6 +19,14 @@ public class Scanner {
         }
     }
 
+    private void skipWhitespace() {
+        char ch = peek();
+        while (ch == ' ' || ch == '\r' || ch == '\t' || ch == '\n') {
+            advance();
+            ch = peek();
+        }
+    }
+
     private Token number() {
         int start = current;
         while (Character.isDigit(peek())) {
@@ -29,6 +37,8 @@ public class Scanner {
     }
 
     public Token nextToken() {
+        skipWhitespace();
+
         char ch = peek();
 
         if (ch == '0') {
@@ -49,15 +59,6 @@ public class Scanner {
                 return new Token(TokenType.EOF, "EOF");
             default:
                 throw new Error("lexical error at " + ch);
-        }
-    }
-
-    public static void main(String[] args) {
-        String input = "289-85+0+69";
-        Scanner scan = new Scanner(input.getBytes());
-
-        for (int i = 0; i < 7; i++) {
-            System.out.println(scan.nextToken());
         }
     }
 }
