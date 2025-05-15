@@ -25,36 +25,85 @@ public class Parser {
         match(TokenType.NUMBER);
     }
 
+    void numberOrIdentifier() {
+        if (currentToken.type == TokenType.NUMBER) {
+            System.out.println("push " + currentToken.lexeme);
+            match(TokenType.NUMBER);
+        } else if (currentToken.type == TokenType.IDENTIFIER) {
+            System.out.println("push " + currentToken.lexeme);
+            match(TokenType.IDENTIFIER);
+        } else {
+            throw new Error("syntax error: expected number or identifier");
+        }
+    }
+
     void oper() {
         if (currentToken.type == TokenType.PLUS) {
             match(TokenType.PLUS);
-            number();
+            numberOrIdentifier();
             System.out.println("add");
             oper();
         } else if (currentToken.type == TokenType.MINUS) {
             match(TokenType.MINUS);
-            number();
+            numberOrIdentifier();
             System.out.println("sub");
             oper();
         }
-        // epsilon: do nothing if no PLUS or MINUS
+        // epsilon
     }
 
     void expr() {
-        number();
+        numberOrIdentifier();
         oper();
     }
 
-    public void parse() {
+    void letStatement() {
+        match(TokenType.LET);
+        if (currentToken.type != TokenType.IDENTIFIER) {
+            throw new Error("syntax error: expected identifier after let");
+        }
+        String varName = currentToken.lexeme;
+        match(TokenType.IDENTIFIER);
+        match(TokenType.ASSIGN);
         expr();
-        if (currentToken.type != TokenType.EOF) {
-            throw new Error("syntax error: unexpected token after expression");
+        System.out.println("pop " + varName);
+        match(TokenType.SEMICOLON);
+    }
+
+    void printStatement() {
+        match(TokenType.PRINT);
+        expr();
+        System.out.println("print");
+        match(TokenType.SEMICOLON);
+    }
+
+    void statement() {
+        if (currentToken.type == TokenType.PRINT) {
+            printStatement();
+        } else if (currentToken.type == TokenType.LET) {
+            letStatement();
+        } else {
+            throw new Error("syntax error: unexpected token " + currentToken.type);
         }
     }
 
-    // Main para testes
+    void statements() {
+        while (currentToken.type != TokenType.EOF) {
+            statement();
+        }
+    }
+
+    public void parse() {
+        statements();
+    }
+
     public static void main(String[] args) {
-        String input = "45  + 89   -       876";
+        String input = """
+            let a = 42 + 5 - 8;
+            let b = 56 + 8;
+            print a + b + 6;
+            """;
+
         Parser p = new Parser(input.getBytes());
         p.parse();
     }

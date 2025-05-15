@@ -1,20 +1,21 @@
 public class Scanner {
 
     private byte[] input;
-    private int current;
+    private int current = 0;
 
     public Scanner(byte[] input) {
         this.input = input;
     }
 
     private char peek() {
-        if (current < input.length)
+        if (current < input.length) {
             return (char) input[current];
+        }
         return '\0';
     }
 
     private void advance() {
-        if (peek() != '\0') {
+        if (current < input.length) {
             current++;
         }
     }
@@ -32,8 +33,24 @@ public class Scanner {
         while (Character.isDigit(peek())) {
             advance();
         }
-        String n = new String(input, start, current - start);
-        return new Token(TokenType.NUMBER, n);
+        String lexeme = new String(input, start, current - start);
+        return new Token(TokenType.NUMBER, lexeme);
+    }
+
+    private Token identifier() {
+        int start = current;
+        while (Character.isLetterOrDigit(peek())) {
+            advance();
+        }
+        String lexeme = new String(input, start, current - start);
+
+        if (lexeme.equals("print")) {
+            return new Token(TokenType.PRINT, lexeme);
+        } else if (lexeme.equals("let")) {
+            return new Token(TokenType.LET, lexeme);
+        } else {
+            return new Token(TokenType.IDENTIFIER, lexeme);
+        }
     }
 
     public Token nextToken() {
@@ -41,11 +58,16 @@ public class Scanner {
 
         char ch = peek();
 
-        if (ch == '0') {
-            advance();
-            return new Token(TokenType.NUMBER, Character.toString(ch));
-        } else if (Character.isDigit(ch)) {
+        if (ch == '\0') {
+            return new Token(TokenType.EOF, "EOF");
+        }
+
+        if (Character.isDigit(ch)) {
             return number();
+        }
+
+        if (Character.isLetter(ch)) {
+            return identifier();
         }
 
         switch (ch) {
@@ -55,10 +77,14 @@ public class Scanner {
             case '-':
                 advance();
                 return new Token(TokenType.MINUS, "-");
-            case '\0':
-                return new Token(TokenType.EOF, "EOF");
+            case '=':
+                advance();
+                return new Token(TokenType.ASSIGN, "=");
+            case ';':
+                advance();
+                return new Token(TokenType.SEMICOLON, ";");
             default:
-                throw new Error("lexical error at " + ch);
+                throw new Error("lexical error: unexpected character '" + ch + "'");
         }
     }
 }
