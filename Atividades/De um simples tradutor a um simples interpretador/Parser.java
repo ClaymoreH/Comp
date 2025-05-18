@@ -2,6 +2,7 @@ public class Parser {
 
     private Scanner scan;
     private Token currentToken;
+    private StringBuilder sb = new StringBuilder(); 
 
     public Parser(byte[] input) {
         this.scan = new Scanner(input);
@@ -20,18 +21,14 @@ public class Parser {
         }
     }
 
-    void number() {
-        System.out.println("push " + currentToken.lexeme);
-        match(TokenType.NUMBER);
+    private void emit(String cmd) {
+        sb.append(cmd).append("\n");
     }
 
     void numberOrIdentifier() {
-        if (currentToken.type == TokenType.NUMBER) {
-            System.out.println("push " + currentToken.lexeme);
-            match(TokenType.NUMBER);
-        } else if (currentToken.type == TokenType.IDENTIFIER) {
-            System.out.println("push " + currentToken.lexeme);
-            match(TokenType.IDENTIFIER);
+        if (currentToken.type == TokenType.NUMBER || currentToken.type == TokenType.IDENTIFIER) {
+            emit("push " + currentToken.lexeme);
+            match(currentToken.type);
         } else {
             throw new Error("syntax error: expected number or identifier");
         }
@@ -41,15 +38,14 @@ public class Parser {
         if (currentToken.type == TokenType.PLUS) {
             match(TokenType.PLUS);
             numberOrIdentifier();
-            System.out.println("add");
+            emit("add");
             oper();
         } else if (currentToken.type == TokenType.MINUS) {
             match(TokenType.MINUS);
             numberOrIdentifier();
-            System.out.println("sub");
+            emit("sub");
             oper();
         }
-        // epsilon
     }
 
     void expr() {
@@ -59,21 +55,18 @@ public class Parser {
 
     void letStatement() {
         match(TokenType.LET);
-        if (currentToken.type != TokenType.IDENTIFIER) {
-            throw new Error("syntax error: expected identifier after let");
-        }
         String varName = currentToken.lexeme;
         match(TokenType.IDENTIFIER);
         match(TokenType.ASSIGN);
         expr();
-        System.out.println("pop " + varName);
+        emit("pop " + varName);
         match(TokenType.SEMICOLON);
     }
 
     void printStatement() {
         match(TokenType.PRINT);
         expr();
-        System.out.println("print");
+        emit("print");
         match(TokenType.SEMICOLON);
     }
 
@@ -97,14 +90,7 @@ public class Parser {
         statements();
     }
 
-    public static void main(String[] args) {
-        String input = """
-            let a = 42 + 5 - 8;
-            let b = 56 + 8;
-            print a + b + 6;
-            """;
-
-        Parser p = new Parser(input.getBytes());
-        p.parse();
+    public String output() {
+        return sb.toString();
     }
 }
